@@ -393,8 +393,6 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     </div>
 
     <div class="tab" id="tab-furn" hidden>
-      <div id="selBox"></div>
-      <div id="presetBox"><h3>家具を置く（押すと部屋の真ん中に置かれます）</h3><div class="chips" id="presetCats" style="margin-bottom:10px"></div><div class="presets" id="presets"></div></div>
       <details class="makerwrap" id="makerBox"><summary><b>一覧にない家具を作る</b><small>大きさを入れて作る・写真からAIで作る</small></summary>
       <div class="maker">
         <h3 style="margin:0">写真からAIで作る</h3>
@@ -414,6 +412,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <div class="row"><button class="btn primary" id="mk-add">この家具を部屋に置く</button></div>
       </div>
       </details>
+      <div id="selBox"></div>
+      <div id="presetBox"><h3>家具を置く（押すと部屋の真ん中に置かれます）</h3><div class="chips" id="presetCats" style="margin-bottom:10px"></div><div class="presets" id="presets"></div></div>
       <div><div class="listhead"><h3>部屋にある家具 <span class="mono" id="cnt"></span></h3><button class="btn" id="addFurn">＋ 家具を追加</button></div><ul class="flist" id="flist"></ul></div>
       <div class="row"><button class="btn primary next" id="goPrint">印刷用の画面を開く</button></div>
     </div>
@@ -786,7 +786,7 @@ $('#flist').addEventListener('click',e=>{const d=e.target.closest('[data-delid]'
 $('#addFurn').addEventListener('click',()=>{$('#presetBox').scrollIntoView({behavior:'smooth',block:'start'})});
 $('#goPrint').addEventListener('click',()=>openPrint());
 function renderSel(){const box=$('#selBox'),it=get(S.sel);
-  if(!it){box.className='selbox empty';box.innerHTML='<b>使い方</b><br>1. 下の家具ボタンを押すと部屋に置かれます。<br>2. 図の中の家具を指でなぞる（マウスでドラッグ）と動きます。壁や他の家具にピタッとくっつきます。<br>3. 家具を押すと、ここで大きさや向きを変えられます。';return}
+  if(!it){box.className='selbox empty';box.innerHTML='<b>使い方</b><ol style="margin:0;padding-left:1.3em;display:grid;gap:4px"><li>下の家具ボタンを押すと部屋に置かれます。</li><li>図の中の家具を指でなぞる（マウスでドラッグ）と動きます。壁や他の家具にピタッとくっつきます。</li><li>家具を押すと、ここで大きさや向きを変えられます。</li></ol>';return}
   box.className='selbox';const bb=aabb(corners(it));
   box.innerHTML=`<div class="selhead"><h3>選んでいる家具</h3><span class="mono">単位 cm</span></div>
   <label class="f">名前<input type="text" id="e-name" value="${esc(it.name)}"></label>
