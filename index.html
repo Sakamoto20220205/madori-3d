@@ -135,7 +135,7 @@ input[type=number],input[type=text],select{font-size:16px;padding:8px 10px}
 .shapes circle{fill:var(--accent);stroke:none}
 .fphoto{display:flex;flex-direction:column;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .fthumbs{display:flex;gap:8px;flex-wrap:wrap}.fthumbs:empty{display:none}
-.busy{position:absolute;inset:0;z-index:8;background:color-mix(in srgb,var(--bg) 84%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px}
+.busy{position:absolute;inset:0;z-index:8;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px}
 .spin{width:40px;height:40px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--accent);animation:spin 1s linear infinite}
 .aibusy .tab,.aibusy .tabs{opacity:.45;pointer-events:none}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -299,7 +299,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </header>
 
   <section class="views" id="views" data-v="both">
-    <div class="busy" id="busy" hidden><div class="spin" aria-hidden="true"></div><b id="busyT"></b><span class="note" id="busyS" style="margin:0"></span><button class="btn" id="busyStop">中止</button></div>
+    <div class="busy" id="busy" hidden><div class="spin" aria-hidden="true"></div><b id="busyT"></b><span class="note" id="busyS" style="margin:0"></span><button class="btn" id="busyStop">中止</button><div class="row" id="busyActs" hidden style="justify-content:center"><button class="btn primary" id="busyRetry">もう一度読み取る</button><button class="btn" id="busyEdit">写真を選び直す</button><button class="btn" id="busyTrace">手でなぞって作る</button></div><small class="note" id="busyCode" style="margin:0"></small></div>
     <div class="itembar" id="itemBar" hidden><span id="ibName"></span><button data-ir="-90" aria-label="左に90度回す">↺</button><button data-ir="-15">−15°</button><button data-ir="15">＋15°</button><button data-ir="90" aria-label="右に90度回す">↻</button></div>
     <div class="pane plan" id="planWrap"><canvas id="plan" aria-label="平面図"></canvas><div class="hint">家具をドラッグで移動・壁や家具に吸着</div><label class="chip planchip"><input type="checkbox" id="rotHandle" checked>回転つまみ</label></div>
     <div class="pane three" id="threeWrap">
@@ -1115,7 +1115,7 @@ const FURN_PROMPT=`この画像は1つの家具の写真です。複数枚ある
 async function serverJSON(task,blobs,signal){const images=await Promise.all(blobs.map(async b=>({data:await blobB64(b),mediaType:b.type||'image/jpeg'})));let r;
   try{r=await fetch(AI_URL,{method:'POST',signal,headers:{'content-type':'application/json'},body:JSON.stringify({task,images})})}
   catch(e){throw{code:e&&e.name==='AbortError'?'cancelled':'network'}}
-  const j=await r.json().catch(()=>({}));if(!r.ok)throw{code:'srv_'+(j.error||r.status)};if(!j.result)throw{code:'invalid_json'};return j.result}
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw{code:'srv_'+(j.error||r.status),detail:j.detail||''};if(!j.result)throw{code:'invalid_json'};return j.result}
 const KEYK='madori3d-apikey';
 const getKey=()=>{try{return localStorage.getItem(KEYK)||''}catch(e){return''}};
 if(window.claude&&typeof window.claude.use==='function'){window.claude.use('sample').then(s=>{AI.sample=s;if(s&&s.limits)return s.limits().then(l=>{AI.img=!!(l&&l.images)}).catch(()=>{})}).catch(()=>{}).finally(()=>{if(AI.on)updateEngine()})}
@@ -1144,6 +1144,9 @@ function aiErr(e){const c=e&&e.code;
   if(c==='srv_server_key_invalid'||c==='srv_server_not_configured')return'AIの設定に問題があり、読み取れませんでした。アプリを配った人に知らせてください。';
   if(c==='srv_upstream_busy'||/^srv_upstream/.test(c||''))return'AIが混み合っているか、つながりませんでした。少し時間をおいて試してください。';
   if(c==='srv_invalid_json')return'AIの答えから間取りを作れませんでした。寸法の数字がはっきり写った写真で、もう一度試してください。';
+  if(c==='srv_no_credit')return'AIの利用料の残高（クレジット）がなくなっています。Anthropicの管理画面でクレジットを追加してください。';
+  if(c==='srv_bad_model')return'AIのモデルの設定が正しくありません（VercelのMODELの設定を確かめてください）。';
+  if(c==='srv_504'||c==='srv_FUNCTION_INVOCATION_TIMEOUT')return'AIの読み取りに時間がかかりすぎて、途中で止まりました。写真の枚数を減らして、もう一度試してください。';
   if(c==='srv_bad_image')return'写真を送れませんでした。別の写真で試してください。';
   if(c==='network')return'通信できませんでした。電波の状態を確かめて、もう一度試してください。';
   if(c==='refused')return'この写真は読み取れませんでした。別の写真で試してください。';
@@ -1313,11 +1316,19 @@ async function createFromSheet(){const c=sheetCtx,k=c.kind,name=$('#n-name').val
 function showBusy(t,sub){$('#busyT').textContent=t;$('#busyS').textContent=sub||'';$('#busy').hidden=false;document.body.classList.add('aibusy')}
 function hideBusy(){$('#busy').hidden=true;document.body.classList.remove('aibusy')}
 $('#busyStop').addEventListener('click',()=>{if(AI.ctl)AI.ctl.abort()});
-async function aiFromCreate(blobs){AI.blobs=blobs.slice();AI.ctl=new AbortController();showBusy('AIが写真から間取りを読み取っています','30秒〜1分ほどかかります。このままお待ちください。');
+async function aiFromCreate(blobs){if(blobs)AI.blobs=blobs.slice();AI.ctl=new AbortController();$('#busyActs').hidden=true;$('#busyStop').hidden=false;$('#busyCode').textContent='';
+  showBusy('AIが写真から間取りを読み取っています','30秒〜1分ほどかかります。このままお待ちください。');$('.busy .spin').hidden=false;
   try{if(engine()==='none')throw{code:'no_engine'};const res=await aiCall('plan',AI.blobs,AI.ctl.signal);if(!applyAI(res))throw{code:'bad_shape'};
     hideBusy();changed({room:true,sel:true});renderRoom();requestAnimationFrame(()=>{draw2D();camPersp()});toast('間取りができました。壁の長さとドア・窓を確かめてください')}
-  catch(err){hideBusy();enterAI();$('#ai-status').textContent=err&&err.code==='no_engine'?'この画面ではAIを使う設定がありません。APIキーを保存してから「この写真をAIで読み取る」を押してください。':err&&err.code==='cancelled'?'中止しました。「この写真をAIで読み取る」を押すと、もう一度読み取れます。':aiErr(err)+' 写真を見直して、もう一度読み取ってください。'}
+  catch(err){const c=err&&err.code;
+    if(c==='cancelled'){hideBusy();enterAI();$('#ai-status').textContent='中止しました。「この写真をAIで読み取る」を押すと、もう一度読み取れます。';return}
+    $('.busy .spin').hidden=true;$('#busyStop').hidden=true;$('#busyActs').hidden=false;
+    showBusy('AIで読み取れませんでした',c==='no_engine'?'この画面ではAIを使う設定がありません。「写真を選び直す」からAPIキーを保存してください。':aiErr(err));
+    $('#busyCode').textContent='エラーの内容：'+(c||'不明')+(err&&err.detail?'（'+String(err.detail).slice(0,120)+'）':'')}
   finally{AI.ctl=null}}
+$('#busyRetry').addEventListener('click',()=>aiFromCreate());
+$('#busyEdit').addEventListener('click',()=>{hideBusy();enterAI()});
+$('#busyTrace').addEventListener('click',()=>{hideBusy();enterTrace()});
 $('#sheetIn').addEventListener('change',async e=>{if(e.target.id!=='n-file'||!sheetCtx)return;const files=[...e.target.files];e.target.value='';const max=sheetCtx.kind==='ai'?4:1;const room=max-sheetCtx.blobs.length;if(room<=0||!files.length)return;
   try{sheetCtx.blobs.push(...await Promise.all(files.slice(0,room).map(f=>toJpeg(f,1280))))}catch(x){$('#n-err').textContent='写真を読み込めませんでした。JPEGかPNGの写真を選んでください。';return}
   renderNewExtra();if(files.length>room)$('#n-err').textContent=`写真は${max}枚までです。入りきらなかった分は外しました。`});

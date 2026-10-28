@@ -71,8 +71,15 @@ module.exports = async function handler(req, res) {
     return res.status(502).json({ error: 'upstream_unreachable' });
   }
   if (!r.ok) {
-    const code = r.status === 429 ? 'upstream_busy' : (r.status === 401 || r.status === 403) ? 'server_key_invalid' : 'upstream_' + r.status;
-    return res.status(502).json({ error: code });
+    let msg = '';
+    try { const e = await r.json(); msg = String((e && e.error && e.error.message) || ''); } catch (e) {}
+    let code = 'upstream_' + r.status;
+    if (r.status === 429 || r.status === 529) code = 'upstream_busy';
+    else if (r.status === 401 || r.status === 403) code = 'server_key_invalid';
+    else if (/credit balance/i.test(msg)) code = 'no_credit';
+    else if (r.status === 404 || /model/i.test(msg)) code = 'bad_model';
+    console.error('anthropic error', r.status, msg);
+    return res.status(502).json({ error: code, detail: msg.slice(0, 200) });
   }
   const j = await r.json();
   const t = (j.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
