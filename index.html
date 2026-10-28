@@ -178,6 +178,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .home-in{max-width:900px;margin:0 auto;padding-block:18px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:12px}
 .hhead{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .hhead h1{font-size:22px;margin:0;display:flex;align-items:center;gap:10px;letter-spacing:.02em}
+.iorow{display:flex;align-items:center;gap:6px;margin:4px 0 2px}
 .hsub{margin:0;color:var(--muted);font-size:13px;line-height:1.6}
 .searchrow{display:flex;gap:8px}
 .search{position:relative;flex:1;min-width:0}
@@ -290,6 +291,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input type="search" id="q" placeholder="名前・メモで検索" aria-label="間取りを検索"></div>
       <select id="sortSel" aria-label="並び順"><option value="upd">更新が新しい順</option><option value="name">名前順</option><option value="crt">作成が新しい順</option></select>
     </div>
+    <div class="iorow"><label class="btn filebtn" id="impPick">ファイルから読み込む<input type="file" id="impFile" accept=".json,application/json"></label><button type="button" class="hq" data-help="backup" aria-label="書き出し・読み込みの使い方">?</button></div>
     <div class="fcount" id="fcount"></div>
     <ul class="cards" id="cards"></ul>
   </div>
@@ -1298,7 +1300,7 @@ function closeSheet(){$('#sheet').hidden=true;sheetCtx=null}
 $('#sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#sheet').hidden)closeSheet()});
 const HELP={
- home:{t:'一覧（最初の画面）',s:['右上の「＋ 新規作成」をタップすると、新しい間取りを作れます。','作った間取りをタップすると開きます。','検索欄に名前やメモの言葉を入れると、間取りを探せます。','間取りの右下の「…」をタップすると、名前の変更・複製・削除ができます。'],tips:['変更は自動で保存されます。保存ボタンはありません。','iPhoneはSafariの共有ボタンから「ホーム画面に追加」しておくと、アプリのように開けて、データも消えにくくなります。']},
+ home:{t:'一覧（最初の画面）',s:['右上の「＋ 新規作成」をタップすると、新しい間取りを作れます。','作った間取りをタップすると開きます。','検索欄に名前やメモの言葉を入れると、間取りを探せます。','間取りの右下の「…」をタップすると、名前の変更・複製・削除ができます。'],tips:['変更は自動で保存されます。保存ボタンはありません。','控えを残したいときや別の端末で使うときは、「…」の「ファイルに書き出す」を使います。','iPhoneはSafariの共有ボタンから「ホーム画面に追加」しておくと、アプリのように開けて、データも消えにくくなります。']},
  new:{t:'新しい間取りを作る',s:['名前は自動で入ります。変えたいときだけ直します。','作り方を選びます。写真がある場合は「写真からAIで作る」がおすすめです。','「写真を選ぶ」をタップして、間取り図の写真を選びます。寸法のメモなども合わせて4枚まで選べます。間違えた写真は「×」で外します。','一番下の「作成してAIで読み取る」をタップします。30秒〜1分で部屋の3Dができます。'],tips:['寸法の数字がはっきり写った、真上からの写真が向いています。','写真がないときは「四角い部屋」で広さを選ぶか、「L字の部屋」で欠けている角を選びます。']},
  walls:{t:'壁の長さを確かめる',s:['壁1・壁2…の順に、部屋の外周の壁が並んでいます。図の「壁1」「壁2」と同じ番号です。','実際に測った長さと違うときは、数字をタップして直します。図と3Dがすぐに変わります。','形が閉じるように、合わない分は自動で調整されます。'],tips:['「★推定」が付いた壁は、AIが見積もった長さです。特に確かめてください。','平面図の角の黄色い番号を指で動かしても、形を変えられます。','天井の高さは、240〜270のボタンか数字で入れます。']},
  doors:{t:'ドア・窓を付ける',s:['「＋ ドア」「＋ 引き戸」「＋ 窓」「＋ 掃き出し窓」のどれかをタップします。','「付ける壁」を選び、左端からの距離・幅・高さを入れます。','ドアは開く向き（部屋の中へ・外へ）と蝶番の側を選べます。','いらないものは右上の「消す」をタップします。'],tips:['部屋の中へ開くドアの開く範囲に家具を置くと、家具が赤くなって知らせます。']},
@@ -1310,9 +1312,10 @@ const HELP={
  maker:{t:'一覧にない家具を作る',s:['写真から作る：「写真を選ぶ」で家具の写真と、寸法が書かれたラベルやカタログの写真を選びます（4枚まで）。','「この写真をAIで読み取る」をタップすると、名前・大きさ・色が下の欄に入ります。','大きさから作る：種類をタップし、名前・幅・奥行き・高さを入れて色を選びます。','「この家具を部屋に置く」をタップします。'],tips:['「よく使う家具」にチェックを入れると、次から家具のボタンに並びます。','AIが「推定」と出したときは、実物を測って直してください。']},
  list:{t:'部屋にある家具',s:['部屋に置いた家具が並んでいます。名前をタップすると、その家具が選ばれます。','「削除」でその家具を消します。','「＋ 家具を追加」で家具のボタンの場所に移動します。'],tips:['間違えて消したときは、すぐに画面下に出る「元に戻す」をタップします。']},
  print:{t:'印刷する',s:['「平面図」「3D」「3D（4方向）」「平面図＋3D」から選びます。','「家具リストを付ける」で家具の一覧も入ります。タイトルも変えられます。','A4横の画像が出ます。画像を長押しして「写真に保存」し、写真アプリから印刷するか、LINEなどで送ります。','「閉じる」で編集画面に戻ります。'],tips:['3Dは、印刷の画面を開いたときの向きで写ります。先に3Dの向きを決めてから開いてください。']},
+ backup:{t:'ファイルに書き出す・読み込む',s:['一覧で間取りの右下の「…」をタップし、「ファイルに書き出す（保存・送る）」をタップします。','「この端末に保存する」でスマホやPCに保存されます。「LINE・メールなどで送る」で、ほかの人や別の端末に送れます。','読み込むときは、一覧の「ファイルから読み込む」をタップして、そのファイルを選びます。','同じレイアウトの間取りが一覧に追加され、そのまま編集できます。'],tips:['読み込んだ間取りは新しく追加されるので、元の間取りは変わりません。','データはこの端末のブラウザの中に保存されています。機種変更やデータの消去に備えて、ときどき書き出しておくと安心です。','間取りを残したまま別の案を試したいときは、「…」の「複製する」が便利です。']},
  error:{t:'AIで読み取れないとき',s:['まず「もう一度読み取る」をタップします。','何度も失敗するときは「写真を選び直す」で、数字がはっきり写った写真に変えます。','それでも難しいときは「手でなぞって作る」で作れます。'],tips:['「今日の上限」と出たときは、明日また試してください。','「エラーの内容」の行は、うまくいかないときに作った人へ伝えると原因がわかります。']}
 };
-const HELP_ORDER=['home','new','ai','walls','doors','remake','trace','presets','sel','maker','list','print','error'];
+const HELP_ORDER=['home','new','ai','walls','doors','remake','trace','presets','sel','maker','list','print','backup','error'];
 let helpBack=null;
 function openHelp(k){const h=HELP[k],box=$('#helpIn');if(k==='index'||!h){
   box.innerHTML=`<h2 id="helpT">使い方</h2><p class="note" style="margin:0">知りたいことをタップしてください。各画面の「?」からも同じ説明が開きます。</p><div class="help-idx">${HELP_ORDER.map(x=>`<button type="button" data-hk="${x}">${HELP[x].t}</button>`).join('')}</div><div class="acts"><button class="btn primary" data-hact="close">閉じる</button></div>`}
@@ -1322,6 +1325,38 @@ function closeHelp(){$('#helpOv').hidden=true;if(helpBack&&helpBack.focus)try{he
 document.addEventListener('click',e=>{const q=e.target.closest('[data-help]');if(!q)return;e.preventDefault();e.stopPropagation();openHelp(q.dataset.help)},true);
 $('#helpOv').addEventListener('click',e=>{if(e.target.id==='helpOv'){closeHelp();return}const k=e.target.closest('[data-hk]');if(k){openHelp(k.dataset.hk);return}const a=e.target.closest('[data-hact]');if(!a)return;if(a.dataset.hact==='close')closeHelp();else openHelp('index')});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#helpOv').hidden){e.stopImmediatePropagation();closeHelp()}},true);
+/* ---------- 書き出し・読み込み ---------- */
+const EXPORT_FMT='madori3d';
+function exportPayload(f){if(CUR&&CUR.id===f.id)flush();return{format:EXPORT_FMT,version:1,exportedAt:new Date().toISOString(),name:f.name,memo:f.memo||'',data:clone(f.data),photo:typeof f.photo==='string'&&f.photo.startsWith('data:image/')?f.photo:null}}
+function exportFile(f){const json=JSON.stringify(exportPayload(f));const d=new Date(),z=n=>String(n).padStart(2,'0');
+  return new File([json],`madori3d_${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}_${z(d.getHours())}${z(d.getMinutes())}${z(d.getSeconds())}.json`,{type:'application/json'})}
+function canShareFile(){try{return!!(navigator.canShare&&navigator.canShare({files:[new File(['{}'],'t.json',{type:'application/json'})]}))}catch(e){return false}}
+function sheetExport(f){openSheet(`<h2>「${esc(f.name)}」をファイルに書き出す</h2>
+  <p class="note" style="margin:0">部屋の形・ドア・窓・家具の配置を、1つのファイル（madori3d_日付.json）にまとめます。ファイルの中に間取りの名前も入っています。あとで「ファイルから読み込む」で選ぶと、同じレイアウトで開いて編集できます。</p>
+  <div class="menu"><button data-act="dl">この端末に保存する（ダウンロード）</button>${canShareFile()?'<button data-act="share">LINE・メールなどで送る／"ファイル"に保存</button>':''}</div>
+  <div class="acts"><button class="btn" data-act="close">閉じる</button></div>`,{f})}
+function exportDownload(f){const file=exportFile(f),url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+  toast(`「${file.name}」を保存しました。ダウンロードの場所を確かめてください`)}
+async function exportShare(f){const file=exportFile(f);try{await navigator.share({files:[file],title:f.name});closeSheet();toast('書き出しました')}catch(e){if(e&&e.name==='AbortError')return;closeSheet();exportDownload(f)}}
+function cleanVal(v,depth){if(depth>8)return undefined;if(v===null||typeof v==='boolean')return v;if(typeof v==='number')return Number.isFinite(v)?v:undefined;
+  if(typeof v==='string')return v.slice(0,300);if(Array.isArray(v))return v.slice(0,3000).map(x=>cleanVal(x,depth+1)).filter(x=>x!==undefined);
+  if(typeof v==='object'){const o={};Object.keys(v).slice(0,60).forEach(k=>{if(k==='__proto__'||k==='constructor'||k==='prototype')return;const c=cleanVal(v[k],depth+1);if(c!==undefined)o[k]=c});return o}return undefined}
+function parseImport(text){let j;try{j=JSON.parse(text)}catch(e){throw'このファイルは読み込めません。間取り3Dで書き出したファイル（madori3d_〜.json）を選んでください。'}
+  if(!j||j.format!==EXPORT_FMT||!j.data)throw'間取り3Dのファイルではありません。間取り3Dで書き出したファイル（madori3d_〜.json）を選んでください。';
+  const d=cleanVal(j.data,0),room=d&&d.room,items=d&&d.items;
+  const ok=room&&Array.isArray(room.pts)&&room.pts.length>=3&&room.pts.every(p=>Array.isArray(p)&&p.length>=2&&p.every(n=>typeof n==='number'))&&Array.isArray(items)&&items.every(it=>it&&['w','d','h','x','y'].every(k=>typeof it[k]==='number'));
+  if(!ok)throw'ファイルの中身が壊れているため、読み込めませんでした。';
+  if(!Array.isArray(room.doors))room.doors=[];if(!(room.ceil>0))room.ceil=240;if(!(room.wallT>0))room.wallT=10;
+  items.forEach(it=>{if(typeof it.id!=='string')it.id=uid();if(typeof it.name!=='string')it.name='家具';if(typeof it.rot!=='number')it.rot=0;if(typeof it.color!=='string'||!/^#[0-9a-f]{6}$/i.test(it.color))it.color='#9aa0a6';if(typeof it.type!=='string')it.type='box'});
+  const photo=typeof j.photo==='string'&&/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(j.photo)&&j.photo.length<12e6?j.photo:null;
+  return{name:String(j.name||'読み込んだ間取り').slice(0,60),memo:String(j.memo||'').slice(0,120),data:{room,items},photo}}
+$('#impFile').addEventListener('change',async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;
+  if(file.size>15e6){toast('ファイルが大きすぎて読み込めません。');return}
+  let r;try{r=parseImport(await file.text())}catch(err){toast(typeof err==='string'?err:'読み込めませんでした。');return}
+  let name=r.name;if(FILES.some(f=>f.name===name))name+='（読み込み）';
+  const rec=makeRec(name,r.memo,r.data);rec.photo=r.photo;FILES.unshift(rec);idbPut(clone(rec));
+  location.hash='plan-'+rec.id;openFile(rec,{tab:'furn'});flush();idbPut(clone(rec));toast(`「${name}」を読み込みました。このまま編集できます`)});
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persisted().then(p=>{if(!p)navigator.storage.persist().catch(()=>{})}).catch(()=>{})}catch(e){}
 const KINDS_NEW=[['ai','写真からAIで作る','間取り図の写真を選ぶと、AIが寸法を読み取って自動で作ります'],['trace','写真を手でなぞる','写真の部屋の角をタップして作ります'],['rect','四角い部屋','畳数を選んで作ります'],['L','L字の部屋','欠けている角を選んで作ります']];
 const TATAMI=[['4.5畳',264,264],['6畳',264,352],['8畳',352,352],['10畳',352,440],['12畳',352,528],['LDK 16畳',440,616]];
 const CORNERS=[['tl','左上','M18 6H38V38H6V18H18Z'],['tr','右上','M6 6H26V18H38V38H6Z'],['bl','左下','M6 6H38V38H18V26H6Z'],['br','右下','M6 6H38V26H26V38H6Z']];
@@ -1373,7 +1408,7 @@ function sheetMeta(f){openSheet(`<h2>名前・メモを変える</h2>
   <label class="f">メモ<input type="text" id="m-memo" value="${esc(f.memo)}" maxlength="120"></label><p class="err" id="m-err"></p>
   <div class="acts"><button class="btn" data-act="close">キャンセル</button><button class="btn primary" data-act="savemeta">保存する</button></div>`,{f})}
 function sheetMenu(f){if(!f)return;openSheet(`<h2>${esc(f.name)}</h2><div class="menu">
-  <button data-act="open">開く</button><button data-act="meta">名前・メモを変える</button><button data-act="dup">複製する</button><button data-act="del" class="dangertxt">削除する</button></div>
+  <button data-act="open">開く</button><button data-act="meta">名前・メモを変える</button><button data-act="dup">複製する</button><button data-act="export">ファイルに書き出す（保存・送る）</button><button data-act="del" class="dangertxt">削除する</button></div>
   <div class="acts"><button class="btn" data-act="close">閉じる</button></div>`,{f})}
 function sheetDel(f){openSheet(`<h2>「${esc(f.name)}」を削除しますか？</h2><p class="note" style="margin:0">この間取りと、置いた家具の配置がすべて消えます。削除すると元に戻せません。</p>
   <div class="acts"><button class="btn" data-act="close">キャンセル</button><button class="btn dangerfill" data-act="delok">削除する</button></div>`,{f})}
@@ -1387,6 +1422,9 @@ $('#sheetIn').addEventListener('click',e=>{const k=e.target.closest('[data-kind]
   else if(act==='savemeta'){const name=$('#m-name').value.trim();if(!name){$('#m-err').textContent='名前を入れてください。';return}
     f.name=name;f.memo=$('#m-memo').value.trim();f.updated=Date.now();idbPut(clone(f));closeSheet();if(CUR===f)$('#fname').textContent=name;else renderHome()}
   else if(act==='open')go('plan-'+f.id);
+  else if(act==='export'){sheetExport(f);return}
+  else if(act==='dl'){exportDownload(sheetCtx.f);closeSheet();return}
+  else if(act==='share'){exportShare(sheetCtx.f);return}
   else if(act==='meta')sheetMeta(f);
   else if(act==='dup'){const r=clone(f);r.id=fid();r.name=f.name+' のコピー';r.created=r.updated=Date.now();FILES.unshift(r);idbPut(clone(r));closeSheet();renderHome();toast(`「${r.name}」を作りました`)}
   else if(act==='del')sheetDel(f);
