@@ -147,6 +147,16 @@ input[type=number],input[type=text],select{font-size:16px;padding:8px 10px}
 .makerwrap>summary b{font-size:14px}.makerwrap>summary small{color:var(--muted);font-size:12px}
 .makerwrap>summary b::before{content:'＋ '}.makerwrap[open]>summary b::before{content:'− '}
 .makerwrap .maker{border:0;padding:0 14px 14px}
+.hq{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;margin-left:8px;border-radius:50%;border:1.5px solid var(--accent);background:var(--surface);color:var(--ink);font:700 14px/1 var(--f-ui,system-ui);cursor:pointer;vertical-align:middle;flex:0 0 auto;padding:0}
+.hq:active{transform:scale(.94)}
+.hqbig{width:auto;height:36px;padding:0 12px;border-radius:999px;gap:4px;font-size:14px}
+#helpOv{z-index:70}
+.help-in h2{display:flex;align-items:center;gap:8px}
+.help-in ol{margin:0;padding-left:1.4em;display:grid;gap:8px;line-height:1.6}
+.help-in .tips{background:var(--soft,#f3efe2);border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.6;display:grid;gap:4px}
+#helpIn{max-height:88vh;max-height:88dvh;overflow:auto}
+.help-idx{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.help-idx button{text-align:left;padding:10px 12px;font-size:14px;line-height:1.4;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer}
 .cardhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .iconbtn{width:36px;height:36px;flex:0 0 auto;border-radius:50%;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:18px;line-height:1;color:var(--ink)}
 .linkbtn{border:0;background:none;padding:0;color:var(--ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font:inherit;font-weight:700}.fthumbs .th{position:relative}.fthumbs img{width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block}
@@ -273,7 +283,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 
 <section class="home" id="home">
   <div class="home-in">
-    <div class="hhead"><h1><span class="tape" aria-hidden="true"></span>間取り3D</h1><button class="btn primary" id="newBtn">＋ 新規作成</button></div>
+    <div class="hhead"><h1><span class="tape" aria-hidden="true"></span>間取り3D</h1><span class="row" style="gap:8px;flex-wrap:nowrap"><button type="button" class="hq hqbig" data-help="index" aria-label="使い方を見る">? 使い方</button><button class="btn primary" id="newBtn">＋ 新規作成</button></span></div>
     <p class="hsub">間取りごとにファイルを作って保存します。ファイルを押すと開き、「…」から名前の変更・複製・削除ができます。</p>
     <div class="banner" id="storeWarn" hidden>このブラウザでは保存が使えません（プライベートブラウズなど）。ページを閉じると内容が消えます。</div>
     <div class="searchrow">
@@ -284,6 +294,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <ul class="cards" id="cards"></ul>
   </div>
 </section>
+<div class="sheet" id="helpOv" hidden><div class="sheet-in help-in" id="helpIn" role="dialog" aria-modal="true" aria-labelledby="helpT"></div></div>
 <div class="sheet" id="sheet" hidden><div class="sheet-in" id="sheetIn" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
@@ -294,12 +305,12 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="seg" id="viewSeg">
         <button data-v="plan">平面</button><button data-v="3d">3D</button><button data-v="both" class="only-wide">両方</button>
       </div>
-      <button class="btn" id="printBtn">印刷</button>
+      <span class="row" style="gap:8px;flex-wrap:nowrap"><button type="button" class="hq hqbig" data-help="index" aria-label="使い方を見る">?</button><button class="btn" id="printBtn">印刷</button></span>
     </div>
   </header>
 
   <section class="views" id="views" data-v="both">
-    <div class="busy" id="busy" hidden><div class="spin" aria-hidden="true"></div><b id="busyT"></b><span class="note" id="busyS" style="margin:0"></span><button class="btn" id="busyStop">中止</button><div class="row" id="busyActs" hidden style="justify-content:center"><button class="btn primary" id="busyRetry">もう一度読み取る</button><button class="btn" id="busyEdit">写真を選び直す</button><button class="btn" id="busyTrace">手でなぞって作る</button></div><small class="note" id="busyCode" style="margin:0"></small></div>
+    <div class="busy" id="busy" hidden><div class="spin" aria-hidden="true"></div><b id="busyT"></b><span class="note" id="busyS" style="margin:0"></span><button class="btn" id="busyStop">中止</button><div class="row" id="busyActs" hidden style="justify-content:center"><button class="btn primary" id="busyRetry">もう一度読み取る</button><button class="btn" id="busyEdit">写真を選び直す</button><button class="btn" id="busyTrace">手でなぞって作る</button></div><small class="note" id="busyCode" style="margin:0"></small><button type="button" class="hq hqbig" data-help="error" id="busyHelp" hidden>? 読み取れないとき</button></div>
     <div class="itembar" id="itemBar" hidden><span id="ibName"></span><button data-ir="-90" aria-label="左に90度回す">↺</button><button data-ir="-15">−15°</button><button data-ir="15">＋15°</button><button data-ir="90" aria-label="右に90度回す">↻</button></div>
     <div class="pane plan" id="planWrap"><canvas id="plan" aria-label="平面図"></canvas><div class="hint">家具をドラッグで移動・壁や家具に吸着</div><label class="chip planchip"><input type="checkbox" id="rotHandle" checked>回転つまみ</label></div>
     <div class="pane three" id="threeWrap">
@@ -319,10 +330,10 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="lead">壁の長さとドア・窓を確かめる画面です。数字を直すと、図と3Dがすぐに変わります（単位はcm）。平面図の角の番号をドラッグして形を変えることもできます。</div>
       <p class="note" id="customNote" hidden>写真から作った形、または角の位置を直接入れた形です。ドアの追加や角の微調整は、下の「もっと細かく形を変える」で行えます。</p>
       <div id="shapeFields"></div>
-      <div class="fieldset" id="openBox"><h3>ドア・窓</h3><div class="g" id="openings"></div><div class="row"><button class="btn" id="addDoor">＋ ドア</button><button class="btn" id="addSlide">＋ 引き戸</button><button class="btn" id="addWin">＋ 窓</button><button class="btn" id="addTall">＋ 掃き出し窓</button></div></div>
+      <div class="fieldset" id="openBox"><h3>ドア・窓<button type="button" class="hq" data-help="doors" aria-label="ドア・窓の使い方">?</button></h3><div class="g" id="openings"></div><div class="row"><button class="btn" id="addDoor">＋ ドア</button><button class="btn" id="addSlide">＋ 引き戸</button><button class="btn" id="addWin">＋ 窓</button><button class="btn" id="addTall">＋ 掃き出し窓</button></div></div>
       <div class="trace" id="aiPanel" hidden>
         <div class="tstep">
-          <div class="cardhead"><h3>写真からAIで作る</h3><button class="iconbtn" id="ai-cancel" aria-label="写真からAIで作るを閉じる">×</button></div>
+          <div class="cardhead"><h3>写真からAIで作る<button type="button" class="hq" data-help="ai" aria-label="写真からAIで作るの使い方">?</button></h3><button class="iconbtn" id="ai-cancel" aria-label="写真からAIで作るを閉じる">×</button></div>
           <p class="note" style="margin:0">寸法の数字がはっきり写った、真上からの写真がおすすめです。1枚目を間取り図にして、寸法のメモや部屋の写真を4枚まで足せます。</p>
           <div class="fthumbs" id="ai-prev"></div>
           <div class="row"><label class="btn filebtn" id="ai-pick">写真を選ぶ<input type="file" id="ai-file" accept="image/*" multiple></label><span class="note" id="ai-count" style="margin:0"></span></div>
@@ -339,7 +350,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         </div>
       </div>
       <div class="trace" id="tracePanel" hidden>
-        <div class="tstep"><h3>1. 間取り図の写真を選ぶ</h3>
+        <div class="tstep"><h3>1. 間取り図の写真を選ぶ<button type="button" class="hq" data-help="trace" aria-label="写真を手でなぞるの使い方">?</button></h3>
           <div class="row"><label class="btn primary filebtn">写真を選ぶ<input type="file" id="t-file" accept="image/*"></label><span class="note" id="t-fname" style="margin:0"></span></div>
           <p class="note">手書きの図でも、不動産の間取り図でも使えます。真上から撮った写真がなぞりやすいです。</p></div>
         <div class="tstep" id="t2" hidden><h3>2. 部屋の角を順番にタップ</h3>
@@ -361,7 +372,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
           <label class="f">壁の厚み（見た目だけ）<input type="number" id="r-wt" min="2" max="40"></label>
         </div>
       </details>
-      <details class="adv" id="remake"><summary>部屋の形を作り直す（写真から・よくある形から）</summary>
+      <details class="adv" id="remake"><summary>部屋の形を作り直す（写真から・よくある形から）<button type="button" class="hq" data-help="remake" aria-label="部屋の形を作り直すの使い方">?</button></summary>
         <div class="g" style="margin-top:12px">
         <div class="shapes" id="shapes">
           <button data-k="ai"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M6 12H28V36H6Z"/><path d="M34 4l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" style="fill:var(--accent);stroke:none"/></svg>写真からAIで作る</button>
@@ -393,7 +404,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     </div>
 
     <div class="tab" id="tab-furn" hidden>
-      <details class="makerwrap" id="makerBox"><summary><b>一覧にない家具を作る</b><small>大きさを入れて作る・写真からAIで作る</small></summary>
+      <details class="makerwrap" id="makerBox"><summary><b>一覧にない家具を作る<button type="button" class="hq" data-help="maker" aria-label="一覧にない家具を作るの使い方">?</button></b><small>大きさを入れて作る・写真からAIで作る</small></summary>
       <div class="maker">
         <h3 style="margin:0">写真からAIで作る</h3>
         <div class="fphoto">
@@ -413,8 +424,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       </div>
       </details>
       <div id="selBox"></div>
-      <div id="presetBox"><h3>家具を置く（押すと部屋の真ん中に置かれます）</h3><div class="chips" id="presetCats" style="margin-bottom:10px"></div><div class="presets" id="presets"></div></div>
-      <div><div class="listhead"><h3>部屋にある家具 <span class="mono" id="cnt"></span></h3><button class="btn" id="addFurn">＋ 家具を追加</button></div><ul class="flist" id="flist"></ul></div>
+      <div id="presetBox"><h3>家具を置く（押すと部屋の真ん中に置かれます）<button type="button" class="hq" data-help="presets" aria-label="家具を置くの使い方">?</button></h3><div class="chips" id="presetCats" style="margin-bottom:10px"></div><div class="presets" id="presets"></div></div>
+      <div><div class="listhead"><h3>部屋にある家具 <span class="mono" id="cnt"></span><button type="button" class="hq" data-help="list" aria-label="部屋にある家具の使い方">?</button></h3><button class="btn" id="addFurn">＋ 家具を追加</button></div><ul class="flist" id="flist"></ul></div>
       <div class="row"><button class="btn primary next" id="goPrint">印刷用の画面を開く</button></div>
     </div>
 
@@ -423,7 +434,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 
 <div class="prov" id="prOv" hidden>
   <div class="prbar">
-    <b>印刷用の画面</b>
+    <b>印刷用の画面<button type="button" class="hq" data-help="print" aria-label="印刷の使い方">?</button></b>
     <div class="seg" id="prMode"><button data-m="plan">平面図</button><button data-m="3d">3D</button><button data-m="3d4">3D（4方向）</button><button data-m="both">平面図＋3D</button></div>
     <label class="chip"><input type="checkbox" id="prList">家具リストを付ける</label>
     <label class="f prt">タイトル<input type="text" id="prTitle"></label>
@@ -788,7 +799,7 @@ $('#goPrint').addEventListener('click',()=>openPrint());
 function renderSel(){const box=$('#selBox'),it=get(S.sel);
   if(!it){box.className='selbox empty';box.innerHTML='<b>使い方</b><ol style="margin:0;padding-left:1.3em;display:grid;gap:4px"><li>下の家具ボタンを押すと部屋に置かれます。</li><li>図の中の家具を指でなぞる（マウスでドラッグ）と動きます。壁や他の家具にピタッとくっつきます。</li><li>家具を押すと、ここで大きさや向きを変えられます。</li></ol>';return}
   box.className='selbox';const bb=aabb(corners(it));
-  box.innerHTML=`<div class="selhead"><h3>選んでいる家具</h3><span class="mono">単位 cm</span></div>
+  box.innerHTML=`<div class="selhead"><h3>選んでいる家具<button type="button" class="hq" data-help="sel" aria-label="選んでいる家具の使い方">?</button></h3><span class="mono">単位 cm</span></div>
   <label class="f">名前<input type="text" id="e-name" value="${esc(it.name)}"></label>
   <div class="g g3"><label class="f">幅<input type="number" id="e-w" min="1" value="${r1(it.w)}"></label><label class="f">奥行き<input type="number" id="e-d" min="1" value="${r1(it.d)}"></label><label class="f">高さ<input type="number" id="e-h" min="1" value="${r1(it.h)}"></label></div>
   <div class="g g2"><label class="f">左の壁からの距離<input type="number" id="e-l" value="${r1(bb.x0)}"></label><label class="f">上の壁からの距離<input type="number" id="e-t" value="${r1(bb.y0)}"></label></div>
@@ -873,7 +884,7 @@ function renderShape(){const sh=S.room.shape;
   const f=(id,label,val)=>`<label class="f">${label}<input type="number" id="${id}" value="${r1(val)}" inputmode="decimal"></label>`;
   let h='';
   if(sh.kind==='walk'){
-    h+=`<div class="fieldset"><h3>壁の長さ（cm）</h3><p class="note" style="margin:0">図の「壁1」「壁2」…の順に、部屋の外周をひと回り並べています。長さを直すと、形が閉じるように${sh.walk.some(w=>w.est)?'★の付いた推定の壁':'同じ向きの最後の壁'}を自動で調整します。</p><p class="note" id="walkSum" style="margin:0;color:var(--ink)">${sumText()}</p><div class="g g2">`+sh.walk.map((w,i)=>`<label class="f"><span>壁${i+1} ${ARROW[w.dir]} <span class="wtag" data-wt="${i}">${w.est?'★推定':''}</span></span><input type="number" data-wl="${i}" value="${r1(w.len)}" inputmode="decimal"></label>`).join('')+`</div><p class="err" id="walkErr">${esc(sh.err||'')}</p>`;
+    h+=`<div class="fieldset"><h3>壁の長さ（cm）<button type="button" class="hq" data-help="walls" aria-label="壁の長さの使い方">?</button></h3><p class="note" style="margin:0">図の「壁1」「壁2」…の順に、部屋の外周をひと回り並べています。長さを直すと、形が閉じるように${sh.walk.some(w=>w.est)?'★の付いた推定の壁':'同じ向きの最後の壁'}を自動で調整します。</p><p class="note" id="walkSum" style="margin:0;color:var(--ink)">${sumText()}</p><div class="g g2">`+sh.walk.map((w,i)=>`<label class="f"><span>壁${i+1} ${ARROW[w.dir]} <span class="wtag" data-wt="${i}">${w.est?'★推定':''}</span></span><input type="number" data-wl="${i}" value="${r1(w.len)}" inputmode="decimal"></label>`).join('')+`</div><p class="err" id="walkErr">${esc(sh.err||'')}</p>`;
     if(sh.notes&&sh.notes.length)h+=`<div class="ainotes"><b>AIからの確認事項</b><ul>${sh.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul></div>`;
     h+=ceilHTML()+'</div>';
   }else if(sh.kind!=='custom'){
@@ -1286,10 +1297,35 @@ function openSheet(html,ctx){sheetCtx=ctx;$('#sheetIn').innerHTML=html;$('#sheet
 function closeSheet(){$('#sheet').hidden=true;sheetCtx=null}
 $('#sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#sheet').hidden)closeSheet()});
+const HELP={
+ home:{t:'一覧（最初の画面）',s:['右上の「＋ 新規作成」をタップすると、新しい間取りを作れます。','作った間取りをタップすると開きます。','検索欄に名前やメモの言葉を入れると、間取りを探せます。','間取りの右下の「…」をタップすると、名前の変更・複製・削除ができます。'],tips:['変更は自動で保存されます。保存ボタンはありません。','iPhoneはSafariの共有ボタンから「ホーム画面に追加」しておくと、アプリのように開けて、データも消えにくくなります。']},
+ new:{t:'新しい間取りを作る',s:['名前は自動で入ります。変えたいときだけ直します。','作り方を選びます。写真がある場合は「写真からAIで作る」がおすすめです。','「写真を選ぶ」をタップして、間取り図の写真を選びます。寸法のメモなども合わせて4枚まで選べます。間違えた写真は「×」で外します。','一番下の「作成してAIで読み取る」をタップします。30秒〜1分で部屋の3Dができます。'],tips:['寸法の数字がはっきり写った、真上からの写真が向いています。','写真がないときは「四角い部屋」で広さを選ぶか、「L字の部屋」で欠けている角を選びます。']},
+ walls:{t:'壁の長さを確かめる',s:['壁1・壁2…の順に、部屋の外周の壁が並んでいます。図の「壁1」「壁2」と同じ番号です。','実際に測った長さと違うときは、数字をタップして直します。図と3Dがすぐに変わります。','形が閉じるように、合わない分は自動で調整されます。'],tips:['「★推定」が付いた壁は、AIが見積もった長さです。特に確かめてください。','平面図の角の黄色い番号を指で動かしても、形を変えられます。','天井の高さは、240〜270のボタンか数字で入れます。']},
+ doors:{t:'ドア・窓を付ける',s:['「＋ ドア」「＋ 引き戸」「＋ 窓」「＋ 掃き出し窓」のどれかをタップします。','「付ける壁」を選び、左端からの距離・幅・高さを入れます。','ドアは開く向き（部屋の中へ・外へ）と蝶番の側を選べます。','いらないものは右上の「消す」をタップします。'],tips:['部屋の中へ開くドアの開く範囲に家具を置くと、家具が赤くなって知らせます。']},
+ remake:{t:'部屋の形を作り直す',s:['「写真からAIで作る」：写真を選び直して、AIでもう一度読み取ります。','「写真を手でなぞる」：写真の部屋の角を順にタップし、最初の角をもう一度タップして形を閉じます。わかる壁の長さを1つ入れて「この寸法で3Dにする」をタップします。','「よくある形」：四角い部屋の広さか、L字の部屋の欠けている角をタップします。'],tips:['間違えて形を変えたときは、すぐに画面下に出る「元に戻す」をタップします。']},
+ ai:{t:'写真からAIで作る',s:['「写真を選ぶ」または「写真を追加」で、間取り図の写真を選びます（4枚まで）。','間違えた写真は「×」で外します。','「この写真をAIで読み取る」をタップします。30秒〜1分ほどで部屋ができます。'],tips:['寸法の数字がはっきり写った、真上からの写真が向いています。','うまくいかないときは「手でなぞって作る」でも作れます。']},
+ trace:{t:'手でなぞって作る',s:['「写真を選ぶ」で間取り図の写真を選びます。','写真の部屋の角を、壁に沿って1つずつタップします。最初の角（大きい丸）をもう一度タップすると形が閉じます。','わかる壁の長さを1つ入れると、残りは写真の比率から自動で入ります。','「この寸法で3Dにする」をタップします。'],tips:['打った角は指で動かして直せます。']},
+ presets:{t:'家具を置く',s:['「寝室」「リビング」などの分類をタップすると、家具が絞り込まれます。','置きたい家具のボタンをタップすると、部屋の真ん中に置かれます。','図の中の家具を指でなぞって、置きたい場所へ動かします。'],tips:['ボタンの下の数字は「幅×奥行き×高さ」（cm）です。','一覧にない家具は、上の「＋ 一覧にない家具を作る」で作れます。']},
+ sel:{t:'選んでいる家具',s:['名前、幅・奥行き・高さ、左の壁と上の壁からの距離を、数字で変えられます。','「左に回す」「右に回す」で90度、「少し左」「少し右」で15度ずつ回ります。','「同じものをもう1つ」で複製、「この家具を消す」で削除します。','「選択をやめる」で選んでいない状態に戻ります。'],tips:['赤い文字が出たときは、壁からはみ出しているか、ほかの家具やドアの開く範囲と重なっています。少し動かすか、向きを変えます。','図の下の「↺ −15° ＋15° ↻」でも回せます。3Dで動かしにくいときは「視点の回転」のチェックを外します。']},
+ maker:{t:'一覧にない家具を作る',s:['写真から作る：「写真を選ぶ」で家具の写真と、寸法が書かれたラベルやカタログの写真を選びます（4枚まで）。','「この写真をAIで読み取る」をタップすると、名前・大きさ・色が下の欄に入ります。','大きさから作る：種類をタップし、名前・幅・奥行き・高さを入れて色を選びます。','「この家具を部屋に置く」をタップします。'],tips:['「よく使う家具」にチェックを入れると、次から家具のボタンに並びます。','AIが「推定」と出したときは、実物を測って直してください。']},
+ list:{t:'部屋にある家具',s:['部屋に置いた家具が並んでいます。名前をタップすると、その家具が選ばれます。','「削除」でその家具を消します。','「＋ 家具を追加」で家具のボタンの場所に移動します。'],tips:['間違えて消したときは、すぐに画面下に出る「元に戻す」をタップします。']},
+ print:{t:'印刷する',s:['「平面図」「3D」「3D（4方向）」「平面図＋3D」から選びます。','「家具リストを付ける」で家具の一覧も入ります。タイトルも変えられます。','A4横の画像が出ます。画像を長押しして「写真に保存」し、写真アプリから印刷するか、LINEなどで送ります。','「閉じる」で編集画面に戻ります。'],tips:['3Dは、印刷の画面を開いたときの向きで写ります。先に3Dの向きを決めてから開いてください。']},
+ error:{t:'AIで読み取れないとき',s:['まず「もう一度読み取る」をタップします。','何度も失敗するときは「写真を選び直す」で、数字がはっきり写った写真に変えます。','それでも難しいときは「手でなぞって作る」で作れます。'],tips:['「今日の上限」と出たときは、明日また試してください。','「エラーの内容」の行は、うまくいかないときに作った人へ伝えると原因がわかります。']}
+};
+const HELP_ORDER=['home','new','ai','walls','doors','remake','trace','presets','sel','maker','list','print','error'];
+let helpBack=null;
+function openHelp(k){const h=HELP[k],box=$('#helpIn');if(k==='index'||!h){
+  box.innerHTML=`<h2 id="helpT">使い方</h2><p class="note" style="margin:0">知りたいことをタップしてください。各画面の「?」からも同じ説明が開きます。</p><div class="help-idx">${HELP_ORDER.map(x=>`<button type="button" data-hk="${x}">${HELP[x].t}</button>`).join('')}</div><div class="acts"><button class="btn primary" data-hact="close">閉じる</button></div>`}
+ else box.innerHTML=`<h2 id="helpT">${h.t}</h2><ol>${h.s.map(x=>`<li>${x}</li>`).join('')}</ol>${h.tips&&h.tips.length?`<div class="tips"><b>ポイント</b>${h.tips.map(x=>`<span>・${x}</span>`).join('')}</div>`:''}<div class="acts"><button class="btn" data-hact="index">ほかの使い方</button><button class="btn primary" data-hact="close">閉じる</button></div>`;
+ if($('#helpOv').hidden)helpBack=document.activeElement;$('#helpOv').hidden=false;const f=box.querySelector('[data-hact="close"]');f&&f.focus()}
+function closeHelp(){$('#helpOv').hidden=true;if(helpBack&&helpBack.focus)try{helpBack.focus()}catch(e){}helpBack=null}
+document.addEventListener('click',e=>{const q=e.target.closest('[data-help]');if(!q)return;e.preventDefault();e.stopPropagation();openHelp(q.dataset.help)},true);
+$('#helpOv').addEventListener('click',e=>{if(e.target.id==='helpOv'){closeHelp();return}const k=e.target.closest('[data-hk]');if(k){openHelp(k.dataset.hk);return}const a=e.target.closest('[data-hact]');if(!a)return;if(a.dataset.hact==='close')closeHelp();else openHelp('index')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#helpOv').hidden){e.stopImmediatePropagation();closeHelp()}},true);
 const KINDS_NEW=[['ai','写真からAIで作る','間取り図の写真を選ぶと、AIが寸法を読み取って自動で作ります'],['trace','写真を手でなぞる','写真の部屋の角をタップして作ります'],['rect','四角い部屋','畳数を選んで作ります'],['L','L字の部屋','欠けている角を選んで作ります']];
 const TATAMI=[['4.5畳',264,264],['6畳',264,352],['8畳',352,352],['10畳',352,440],['12畳',352,528],['LDK 16畳',440,616]];
 const CORNERS=[['tl','左上','M18 6H38V38H6V18H18Z'],['tr','右上','M6 6H26V18H38V38H6Z'],['bl','左下','M6 6H38V38H18V26H6Z'],['br','右下','M6 6H38V26H26V38H6Z']];
-function sheetNew(){const d=new Date();openSheet(`<h2>新しい間取りを作る</h2>
+function sheetNew(){const d=new Date();openSheet(`<h2>新しい間取りを作る<button type="button" class="hq" data-help="new" aria-label="新しい間取りを作るの使い方">?</button></h2>
   <label class="f">名前<input type="text" id="n-name" value="新しい間取り ${d.getMonth()+1}/${d.getDate()}" maxlength="60"></label>
   <span class="lbl" style="margin:0">作り方</span><div class="opts" id="n-kind">${KINDS_NEW.map((k,i)=>`<button data-kind="${k[0]}" class="${i===0?'on':''}"><b>${k[1]}</b><small>${k[2]}</small></button>`).join('')}</div>
   <div class="g" id="n-extra"></div>
@@ -1316,13 +1352,13 @@ async function createFromSheet(){const c=sheetCtx,k=c.kind,name=$('#n-name').val
 function showBusy(t,sub){$('#busyT').textContent=t;$('#busyS').textContent=sub||'';$('#busy').hidden=false;document.body.classList.add('aibusy')}
 function hideBusy(){$('#busy').hidden=true;document.body.classList.remove('aibusy')}
 $('#busyStop').addEventListener('click',()=>{if(AI.ctl)AI.ctl.abort()});
-async function aiFromCreate(blobs){if(blobs)AI.blobs=blobs.slice();AI.ctl=new AbortController();$('#busyActs').hidden=true;$('#busyStop').hidden=false;$('#busyCode').textContent='';
+async function aiFromCreate(blobs){if(blobs)AI.blobs=blobs.slice();AI.ctl=new AbortController();$('#busyActs').hidden=true;$('#busyHelp').hidden=true;$('#busyStop').hidden=false;$('#busyCode').textContent='';
   showBusy('AIが写真から間取りを読み取っています','30秒〜1分ほどかかります。このままお待ちください。');$('.busy .spin').hidden=false;
   try{if(engine()==='none')throw{code:'no_engine'};const res=await aiCall('plan',AI.blobs,AI.ctl.signal);if(!applyAI(res))throw{code:'bad_shape'};
     hideBusy();changed({room:true,sel:true});renderRoom();requestAnimationFrame(()=>{draw2D();camPersp()});toast('間取りができました。壁の長さとドア・窓を確かめてください')}
   catch(err){const c=err&&err.code;
     if(c==='cancelled'){hideBusy();enterAI();$('#ai-status').textContent='中止しました。「この写真をAIで読み取る」を押すと、もう一度読み取れます。';return}
-    $('.busy .spin').hidden=true;$('#busyStop').hidden=true;$('#busyActs').hidden=false;
+    $('.busy .spin').hidden=true;$('#busyStop').hidden=true;$('#busyActs').hidden=false;$('#busyHelp').hidden=false;
     showBusy('AIで読み取れませんでした',c==='no_engine'?'この画面ではAIを使う設定がありません。「写真を選び直す」からAPIキーを保存してください。':aiErr(err));
     $('#busyCode').textContent='エラーの内容：'+(c||'不明')+(err&&err.detail?'（'+String(err.detail).slice(0,120)+'）':'')}
   finally{AI.ctl=null}}
@@ -1382,7 +1418,7 @@ async function boot(){await idbOpen();FILES=await idbAll();
   route()}
 
 setView(view);renderPresets();pickKind('desk');init3D();boot();
-window.__m3d={get S(){return S},get T3(){return T3},get CUR(){return CUR},get FILES(){return FILES},get TR(){return TR},get uiTab(){return uiTab},get view(){return view}};
+window.__m3d={get S(){return S},get T3(){return T3},get CUR(){return CUR},get FILES(){return FILES},get TR(){return TR},get uiTab(){return uiTab},get view(){return view},refresh(){changed({})}};
 })();
 </script>
 
