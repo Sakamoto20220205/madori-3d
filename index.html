@@ -134,7 +134,22 @@ input[type=number],input[type=text],select{font-size:16px;padding:8px 10px}
 .shapes{grid-template-columns:repeat(2,minmax(0,1fr))!important}
 .shapes circle{fill:var(--accent);stroke:none}
 .fphoto{display:flex;flex-direction:column;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--line)}
-.fthumbs{display:flex;gap:8px;flex-wrap:wrap}.fthumbs .th{position:relative}.fthumbs img{width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block}
+.fthumbs{display:flex;gap:8px;flex-wrap:wrap}.fthumbs:empty{display:none}
+.busy{position:absolute;inset:0;z-index:8;background:color-mix(in srgb,var(--bg) 84%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px}
+.spin{width:40px;height:40px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--accent);animation:spin 1s linear infinite}
+.aibusy .tab,.aibusy .tabs{opacity:.45;pointer-events:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
+#remake>summary{color:var(--ink);font-weight:700;font-size:14px}
+.makerwrap{border:1px solid var(--line);border-radius:12px}
+.makerwrap>summary{cursor:pointer;padding:14px;display:flex;flex-direction:column;gap:2px;list-style:none}
+.makerwrap>summary::-webkit-details-marker{display:none}
+.makerwrap>summary b{font-size:14px}.makerwrap>summary small{color:var(--muted);font-size:12px}
+.makerwrap>summary b::before{content:'＋ '}.makerwrap[open]>summary b::before{content:'− '}
+.makerwrap .maker{border:0;padding:0 14px 14px}
+.cardhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.iconbtn{width:36px;height:36px;flex:0 0 auto;border-radius:50%;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:18px;line-height:1;color:var(--ink)}
+.linkbtn{border:0;background:none;padding:0;color:var(--ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font:inherit;font-weight:700}.fthumbs .th{position:relative}.fthumbs img{width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block}
 .fthumbs .th button{position:absolute;top:-8px;right:-8px;width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;font-size:14px;line-height:1}
 .fthumbs .th small{position:absolute;left:4px;bottom:4px;background:rgba(0,0,0,.65);color:#fff;font-size:10px;border-radius:4px;padding:1px 4px}
 .aiprev{max-height:220px;width:auto;max-width:100%;border-radius:8px;border:1px solid var(--line);align-self:flex-start}
@@ -284,6 +299,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </header>
 
   <section class="views" id="views" data-v="both">
+    <div class="busy" id="busy" hidden><div class="spin" aria-hidden="true"></div><b id="busyT"></b><span class="note" id="busyS" style="margin:0"></span><button class="btn" id="busyStop">中止</button></div>
     <div class="itembar" id="itemBar" hidden><span id="ibName"></span><button data-ir="-90" aria-label="左に90度回す">↺</button><button data-ir="-15">−15°</button><button data-ir="15">＋15°</button><button data-ir="90" aria-label="右に90度回す">↻</button></div>
     <div class="pane plan" id="planWrap"><canvas id="plan" aria-label="平面図"></canvas><div class="hint">家具をドラッグで移動・壁や家具に吸着</div><label class="chip planchip"><input type="checkbox" id="rotHandle" checked>回転つまみ</label></div>
     <div class="pane three" id="threeWrap">
@@ -300,52 +316,27 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <nav class="tabs" id="tabs"><button data-t="room" class="on">① 部屋の寸法</button><button data-t="furn">② 家具を置く</button></nav>
 
     <div class="tab" id="tab-room">
-      <div class="lead">部屋の形と寸法を決める画面です。<b>間取り図の写真があれば「写真からAIで作る」</b>がいちばん簡単です。数字を直すと図と3Dがすぐに変わります。数字はすべてcm（センチ）です。</div>
-      <div>
-        <h3>部屋の形を選ぶ</h3>
-        <div class="shapes" id="shapes">
-          <button data-k="ai"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M6 12H28V36H6Z"/><path d="M34 4l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" style="fill:var(--accent);stroke:none"/></svg>写真からAIで作る</button>
-          <button data-k="trace"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M6 10H30V34H6Z" style="stroke-dasharray:3 3"/><circle cx="6" cy="10" r="3"/><circle cx="30" cy="10" r="3"/><circle cx="30" cy="34" r="3"/><path d="M28 30L38 40" /></svg>写真を手でなぞる</button>
-</div>
-        <div class="tpl" id="tplBox">
-          <h3 style="margin:0">よくある形から選ぶ</h3>
-          <span class="lbl" style="margin:0">四角い部屋（江戸間の畳で計算）</span>
-          <div class="chips" id="tplRect">
-            <button class="chipbtn" data-w="264" data-d="264">4.5畳<small>264×264</small></button>
-            <button class="chipbtn" data-w="264" data-d="352">6畳<small>264×352</small></button>
-            <button class="chipbtn" data-w="352" data-d="352">8畳<small>352×352</small></button>
-            <button class="chipbtn" data-w="352" data-d="440">10畳<small>352×440</small></button>
-            <button class="chipbtn" data-w="352" data-d="528">12畳<small>352×528</small></button>
-            <button class="chipbtn" data-w="440" data-d="616">LDK 16畳<small>440×616</small></button>
-          </div>
-          <span class="lbl" style="margin:0">L字の部屋（欠けている角を選ぶ）</span>
-          <div class="shapes4" id="tplL">
-            <button data-c="tl"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M18 6H38V38H6V18H18Z"/></svg>左上</button>
-            <button data-c="tr"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M6 6H26V18H38V38H6Z"/></svg>右上</button>
-            <button data-c="bl"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M6 6H38V38H18V26H6Z"/></svg>左下</button>
-            <button data-c="br"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M6 6H38V26H26V38H6Z"/></svg>右下</button>
-          </div>
-          <p class="note" style="margin:0">形を選んだあと、下の「壁の長さ」で実際の寸法に直します。平面図の角の番号をドラッグして形を変えることもできます。</p>
-        </div>
-        <p class="note" id="customNote" hidden>写真から作った形、または角の位置を直接入れた形です。ドアの追加や角の微調整は、下の「もっと細かく形を変える」で行えます。</p>
-      </div>
+      <div class="lead">壁の長さとドア・窓を確かめる画面です。数字を直すと、図と3Dがすぐに変わります（単位はcm）。平面図の角の番号をドラッグして形を変えることもできます。</div>
+      <p class="note" id="customNote" hidden>写真から作った形、または角の位置を直接入れた形です。ドアの追加や角の微調整は、下の「もっと細かく形を変える」で行えます。</p>
       <div id="shapeFields"></div>
       <div class="fieldset" id="openBox"><h3>ドア・窓</h3><div class="g" id="openings"></div><div class="row"><button class="btn" id="addDoor">＋ ドア</button><button class="btn" id="addSlide">＋ 引き戸</button><button class="btn" id="addWin">＋ 窓</button><button class="btn" id="addTall">＋ 掃き出し窓</button></div></div>
       <div class="trace" id="aiPanel" hidden>
-        <div class="tstep"><h3>1. 間取り図の写真を選ぶ</h3>
-          <div class="row"><label class="btn primary filebtn" id="ai-pick">写真を選ぶ<input type="file" id="ai-file" accept="image/*" multiple></label><span class="note" id="ai-count" style="margin:0"></span></div>
+        <div class="tstep">
+          <div class="cardhead"><h3>写真からAIで作る</h3><button class="iconbtn" id="ai-cancel" aria-label="写真からAIで作るを閉じる">×</button></div>
+          <p class="note" style="margin:0">寸法の数字がはっきり写った、真上からの写真がおすすめです。1枚目を間取り図にして、寸法のメモや部屋の写真を4枚まで足せます。</p>
           <div class="fthumbs" id="ai-prev"></div>
-          <p class="note" style="margin:0">手書きのスケッチでも不動産の図面でも読み取れます。寸法の数字がはっきり写るように、真上から撮った写真がおすすめです。間取り図に加えて、寸法のメモや部屋の写真など、まとめて4枚まで選べます（1枚目を間取り図にしてください）。写真はAIで読み取るためにAnthropic社へ送られます。</p></div>
-        <div class="tstep" id="ai-s2" hidden><h3>2. AIで読み取る</h3>
-          <p class="note" id="ai-engine" style="margin:0"></p>
-          <div id="ai-keybox" class="g" hidden>
-            <label class="f">ClaudeのAPIキー<input type="password" id="ai-key" placeholder="sk-ant-…" autocomplete="off"></label>
-            <p class="note" style="margin:0">キーは <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Claude Console</a> で作れます。キーはこの端末のブラウザにだけ保存され、読み取るときにAnthropicへ直接送られます。読み取り1回ごとにAPIの利用料がかかります。共用のスマホ・パソコンには保存しないでください。</p>
-            <div class="row"><button class="btn" id="ai-keysave">キーを保存</button><button class="btn danger" id="ai-keydel" hidden>保存したキーを消す</button></div>
+          <div class="row"><label class="btn filebtn" id="ai-pick">写真を選ぶ<input type="file" id="ai-file" accept="image/*" multiple></label><span class="note" id="ai-count" style="margin:0"></span></div>
+          <div class="g" id="ai-s2" hidden>
+            <div id="ai-keybox" class="g" hidden>
+              <label class="f">ClaudeのAPIキー<input type="password" id="ai-key" placeholder="sk-ant-…" autocomplete="off"></label>
+              <p class="note" style="margin:0">キーは <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Claude Console</a> で作れます。キーはこの端末のブラウザにだけ保存され、読み取るときにAnthropicへ直接送られます。読み取り1回ごとにAPIの利用料がかかります。共用のスマホ・パソコンには保存しないでください。</p>
+              <div class="row"><button class="btn" id="ai-keysave">キーを保存</button><button class="btn danger" id="ai-keydel" hidden>保存したキーを消す</button></div>
+            </div>
+            <div class="row"><button class="btn primary" id="ai-run">この写真をAIで読み取る</button><button class="btn" id="ai-stop" hidden>中止</button></div>
+            <p class="note" id="ai-status" role="status" style="margin:0"></p>
           </div>
-          <div class="row"><button class="btn primary" id="ai-run">この写真をAIで読み取る</button><button class="btn" id="ai-stop" hidden>中止</button></div>
-          <p class="note" id="ai-status" role="status" style="margin:0"></p></div>
-        <div class="row"><button class="btn" id="ai-manual">手でなぞって作る</button><button class="btn" id="ai-cancel">やめる</button></div>
+          <p class="note" style="margin:0;border-top:1px solid var(--line);padding-top:10px"><span id="ai-engine"></span>写真はAIで読み取るためにAnthropic社へ送られます。うまく読み取れないときは <button class="linkbtn" id="ai-manual">手でなぞって作る</button></p>
+        </div>
       </div>
       <div class="trace" id="tracePanel" hidden>
         <div class="tstep"><h3>1. 間取り図の写真を選ぶ</h3>
@@ -370,21 +361,51 @@ input[type=range]{width:100%;accent-color:var(--accent)}
           <label class="f">壁の厚み（見た目だけ）<input type="number" id="r-wt" min="2" max="40"></label>
         </div>
       </details>
+      <details class="adv" id="remake"><summary>部屋の形を作り直す（写真から・よくある形から）</summary>
+        <div class="g" style="margin-top:12px">
+        <div class="shapes" id="shapes">
+          <button data-k="ai"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M6 12H28V36H6Z"/><path d="M34 4l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" style="fill:var(--accent);stroke:none"/></svg>写真からAIで作る</button>
+          <button data-k="trace"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M6 10H30V34H6Z" style="stroke-dasharray:3 3"/><circle cx="6" cy="10" r="3"/><circle cx="30" cy="10" r="3"/><circle cx="30" cy="34" r="3"/><path d="M28 30L38 40" /></svg>写真を手でなぞる</button>
+</div>
+        <div class="tpl" id="tplBox">
+          <h3 style="margin:0">よくある形から選ぶ</h3>
+          <span class="lbl" style="margin:0">四角い部屋（江戸間の畳で計算）</span>
+          <div class="chips" id="tplRect">
+            <button class="chipbtn" data-w="264" data-d="264">4.5畳<small>264×264</small></button>
+            <button class="chipbtn" data-w="264" data-d="352">6畳<small>264×352</small></button>
+            <button class="chipbtn" data-w="352" data-d="352">8畳<small>352×352</small></button>
+            <button class="chipbtn" data-w="352" data-d="440">10畳<small>352×440</small></button>
+            <button class="chipbtn" data-w="352" data-d="528">12畳<small>352×528</small></button>
+            <button class="chipbtn" data-w="440" data-d="616">LDK 16畳<small>440×616</small></button>
+          </div>
+          <span class="lbl" style="margin:0">L字の部屋（欠けている角を選ぶ）</span>
+          <div class="shapes4" id="tplL">
+            <button data-c="tl"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M18 6H38V38H6V18H18Z"/></svg>左上</button>
+            <button data-c="tr"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M6 6H26V18H38V38H6Z"/></svg>右上</button>
+            <button data-c="bl"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M6 6H38V38H18V26H6Z"/></svg>左下</button>
+            <button data-c="br"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M6 6H38V26H26V38H6Z"/></svg>右下</button>
+          </div>
+          <p class="note" style="margin:0">形を選んだあと、下の「壁の長さ」で実際の寸法に直します。平面図の角の番号をドラッグして形を変えることもできます。</p>
+        </div>
+        </div>
+      </details>
       <div class="row"><button class="btn primary next" data-go="furn">次へ：家具を置く</button></div>
     </div>
 
     <div class="tab" id="tab-furn" hidden>
       <div id="selBox"></div>
-      <div id="presetBox"><h3>よく使う家具（押すと部屋の真ん中に置かれます）</h3><div class="chips" id="presetCats" style="margin-bottom:10px"></div><div class="presets" id="presets"></div></div>
+      <div id="presetBox"><h3>家具を置く（押すと部屋の真ん中に置かれます）</h3><div class="chips" id="presetCats" style="margin-bottom:10px"></div><div class="presets" id="presets"></div></div>
+      <details class="makerwrap" id="makerBox"><summary><b>一覧にない家具を作る</b><small>大きさを入れて作る・写真からAIで作る</small></summary>
       <div class="maker">
-        <h3>サイズを決めて家具を作る</h3>
+        <h3 style="margin:0">写真からAIで作る</h3>
         <div class="fphoto">
           <div class="row"><label class="btn filebtn" id="fa-pick">写真を選ぶ<input type="file" id="fa-file" accept="image/*" multiple></label><button class="btn primary" id="fa-run" hidden>この写真をAIで読み取る</button><button class="btn" id="fa-stop" hidden>中止</button></div>
-          <p class="note" style="margin:0">写真からAIで作るときは、家具の写真と、寸法が書かれたラベル・カタログ・値札などの写真を4枚まで選び、「この写真をAIで読み取る」を押します。間違えた写真は「×」で外せます。読み取った名前・大きさ・色が下の欄に入るので、確かめてから置いてください。</p>
+          <p class="note" style="margin:0">家具の写真と、寸法が書かれたラベルやカタログの写真を4枚まで選び、「この写真をAIで読み取る」を押します。読み取った名前・大きさ・色が下の欄に入ります。</p>
           <div class="fthumbs" id="fa-thumbs"></div>
           <p class="note" id="fa-status" role="status" style="margin:0"></p>
           <div class="ainotes" id="fa-notes" hidden></div>
         </div>
+        <h3 style="margin:0">大きさを入れて作る</h3>
         <div class="kinds" id="mk-kinds"></div>
         <label class="f">名前<input type="text" id="mk-name"></label>
         <div class="g g3"><label class="f">幅<input type="number" id="mk-w" min="1"></label><label class="f">奥行き<input type="number" id="mk-d" min="1"></label><label class="f">高さ<input type="number" id="mk-h" min="1"></label></div>
@@ -392,6 +413,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <label class="chip plain"><input type="checkbox" id="mk-keep" checked>「よく使う家具」にも登録する</label>
         <div class="row"><button class="btn primary" id="mk-add">この家具を部屋に置く</button></div>
       </div>
+      </details>
       <div><div class="listhead"><h3>部屋にある家具 <span class="mono" id="cnt"></span></h3><button class="btn" id="addFurn">＋ 家具を追加</button></div><ul class="flist" id="flist"></ul></div>
       <div class="row"><button class="btn primary next" id="goPrint">印刷用の画面を開く</button></div>
     </div>
@@ -845,8 +867,8 @@ function renderShape(){const sh=S.room.shape;
   document.querySelectorAll('#shapes button').forEach(b=>b.classList.toggle('on',sh.kind!=='custom'&&b.dataset.k===sh.kind&&(sh.kind!=='L'||b.dataset.side===sh.side)));
   if(sh.kind==='walk'&&sh.src==='ai')document.querySelectorAll('#shapes button').forEach(b=>b.classList.toggle('on',b.dataset.k==='ai'));
   $('#aiPanel').hidden=!AI.on;
-  if(TR.on||AI.on){document.querySelectorAll('#shapes button').forEach(b=>b.classList.toggle('on',b.dataset.k===(TR.on?'trace':'ai')));$('#customNote').hidden=true;$('#shapeFields').hidden=true;$('#tracePanel').hidden=!TR.on;$('#adv').hidden=true;$('#openBox').hidden=true;$('#tplBox').hidden=true;return}
-  $('#shapeFields').hidden=false;$('#tracePanel').hidden=true;$('#adv').hidden=false;$('#openBox').hidden=false;$('#tplBox').hidden=false;
+  if(TR.on||AI.on){document.querySelectorAll('#shapes button').forEach(b=>b.classList.toggle('on',b.dataset.k===(TR.on?'trace':'ai')));$('#customNote').hidden=true;$('#shapeFields').hidden=true;$('#tracePanel').hidden=!TR.on;$('#adv').hidden=true;$('#openBox').hidden=true;$('#tplBox').hidden=true;$('#remake').hidden=true;$('#tab-room .next').hidden=true;return}
+  $('#shapeFields').hidden=false;$('#tracePanel').hidden=true;$('#adv').hidden=false;$('#openBox').hidden=false;$('#tplBox').hidden=false;$('#remake').hidden=false;$('#tab-room .next').hidden=false;
   $('#customNote').hidden=sh.kind!=='custom';
   const f=(id,label,val)=>`<label class="f">${label}<input type="number" id="${id}" value="${r1(val)}" inputmode="decimal"></label>`;
   let h='';
@@ -1100,11 +1122,11 @@ if(window.claude&&typeof window.claude.use==='function'){window.claude.use('samp
 const inArtifact=!!window.claude;
 function engine(){return AI.sample&&AI.img?'claude':(AI_URL&&!inArtifact)?'server':getKey()?'api':'none'}
 function updateEngine(){const e=engine(),k=$('#ai-keybox');
-  $('#ai-engine').textContent=e==='server'?'AIが写真を読み取ります。設定は不要です。':e==='claude'?'あなたのClaudeアカウントでAIが読み取ります（最初の1回だけ、利用の許可を確認する画面が出ます）。':e==='api'?'この端末に保存したClaudeのAPIキーで、AIが読み取ります。':'この画面でAIを使うには、ClaudeのAPIキーが必要です。下に入れて保存してください。';
+  $('#ai-engine').textContent=e==='server'?'':e==='claude'?'あなたのClaudeアカウントでAIが読み取ります（最初の1回だけ、利用の許可を確認する画面が出ます）。':e==='api'?'この端末に保存したClaudeのAPIキーで、AIが読み取ります。':'この画面でAIを使うには、ClaudeのAPIキーが必要です。下に入れて保存してください。';
   k.hidden=e==='claude'||e==='server';$('#ai-keydel').hidden=!getKey();$('#ai-run').disabled=e==='none'||!AI.blobs.length}
 function enterAI(){if(TR.on)exitTrace();AI.on=true;
   if(!AI.blobs.length&&CUR&&CUR.photo){fetch(CUR.photo).then(r=>r.blob()).then(b=>{AI.blobs=[b];showAIPreview()}).catch(()=>{})}
-  renderShape();showAIPreview();updateEngine()}
+  renderShape();showAIPreview();updateEngine();$('#remake').open=false;requestAnimationFrame(()=>$('#aiPanel').scrollIntoView({behavior:'smooth',block:'start'}))}
 function exitAI(){AI.on=false;if(AI.ctl)AI.ctl.abort();aiBusy(false);renderShape()}
 function thumbs(el,blobs,first){el.innerHTML=blobs.map((b,i)=>`<div class="th"><img src="${URL.createObjectURL(b)}" alt="${i?'追加の写真':first}">${i===0&&first?`<small>${first}</small>`:''}<button data-rmph="${i}" aria-label="この写真を外す">×</button></div>`).join('')}
 function showAIPreview(){thumbs($('#ai-prev'),AI.blobs,'間取り図');const n=AI.blobs.length;
@@ -1162,7 +1184,7 @@ $('#ai-file').addEventListener('change',async e=>{const files=[...e.target.files
   const room=4-AI.blobs.length;if(room<=0)return;const add=files.slice(0,room);
   try{AI.blobs.push(...await Promise.all(add.map(f=>toJpeg(f,1280))))}catch(x){$('#ai-status').textContent='この写真は読み込めませんでした。JPEGかPNGの写真を選んでください。';return}
   if(CUR&&AI.blobs.length){try{CUR.photo=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(AI.blobs[0])})}catch(x){}save()}
-  $('#ai-status').textContent=files.length>room?'写真は4枚までです。入りきらなかった分は外しました。':'写真がそろったら「この写真をAIで読み取る」を押してください。';showAIPreview()});
+  $('#ai-status').textContent=files.length>room?'写真は4枚までです。入りきらなかった分は外しました。':'';showAIPreview()});
 $('#ai-run').addEventListener('click',runAI);
 $('#ai-stop').addEventListener('click',()=>{if(AI.ctl)AI.ctl.abort()});
 $('#ai-keysave').addEventListener('click',()=>{const v=$('#ai-key').value.trim();if(!/^sk-/.test(v)){$('#ai-status').textContent='APIキーは「sk-」で始まる文字列です。';return}
@@ -1261,13 +1283,44 @@ function openSheet(html,ctx){sheetCtx=ctx;$('#sheetIn').innerHTML=html;$('#sheet
 function closeSheet(){$('#sheet').hidden=true;sheetCtx=null}
 $('#sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#sheet').hidden)closeSheet()});
-const KINDS_NEW=[['ai','写真からAIで作る','間取り図の写真を読み込むと、AIが寸法を読み取って自動で作る'],['trace','写真を手でなぞる','写真の部屋の角をタップして作る'],['rect','四角い部屋','6畳で始まり、畳数や寸法はあとから選んだり直したりできる'],['L','L字の部屋','欠けている角や寸法はあとから変えられる']];
-function sheetNew(){openSheet(`<h2>新しい間取りを作る</h2>
-  <label class="f">名前（必須）<input type="text" id="n-name" placeholder="例：自宅 寝室" maxlength="60"></label>
-  <label class="f">メモ（検索にも使えます）<input type="text" id="n-memo" placeholder="例：11月に引っ越し予定" maxlength="120"></label>
-  <span class="lbl">作り方</span><div class="opts" id="n-kind">${KINDS_NEW.map((k,i)=>`<button data-kind="${k[0]}" class="${i===0?'on':''}"><b>${k[1]}</b><small>${k[2]}</small></button>`).join('')}</div>
+const KINDS_NEW=[['ai','写真からAIで作る','間取り図の写真を選ぶと、AIが寸法を読み取って自動で作ります'],['trace','写真を手でなぞる','写真の部屋の角をタップして作ります'],['rect','四角い部屋','畳数を選んで作ります'],['L','L字の部屋','欠けている角を選んで作ります']];
+const TATAMI=[['4.5畳',264,264],['6畳',264,352],['8畳',352,352],['10畳',352,440],['12畳',352,528],['LDK 16畳',440,616]];
+const CORNERS=[['tl','左上','M18 6H38V38H6V18H18Z'],['tr','右上','M6 6H26V18H38V38H6Z'],['bl','左下','M6 6H38V38H18V26H6Z'],['br','右下','M6 6H38V26H26V38H6Z']];
+function sheetNew(){const d=new Date();openSheet(`<h2>新しい間取りを作る</h2>
+  <label class="f">名前<input type="text" id="n-name" value="新しい間取り ${d.getMonth()+1}/${d.getDate()}" maxlength="60"></label>
+  <span class="lbl" style="margin:0">作り方</span><div class="opts" id="n-kind">${KINDS_NEW.map((k,i)=>`<button data-kind="${k[0]}" class="${i===0?'on':''}"><b>${k[1]}</b><small>${k[2]}</small></button>`).join('')}</div>
+  <div class="g" id="n-extra"></div>
+  <label class="f">メモ（なくても大丈夫です。検索に使えます）<input type="text" id="n-memo" placeholder="例：11月に引っ越し予定" maxlength="120"></label>
   <p class="err" id="n-err"></p>
-  <div class="acts"><button class="btn" data-act="close">キャンセル</button><button class="btn primary" data-act="create">作成する</button></div>`,{kind:'ai'})}
+  <div class="acts"><button class="btn" data-act="close">キャンセル</button><button class="btn primary" data-act="create" id="n-go">作成する</button></div>`,{kind:'ai',blobs:[],tat:'6畳',corner:'tr'});renderNewExtra()}
+function renderNewExtra(){const c=sheetCtx,ex=$('#n-extra'),go=$('#n-go');if(!c||!ex)return;const k=c.kind;$('#n-err').textContent='';
+  if(k==='ai'||k==='trace'){const max=k==='ai'?4:1;c.blobs=c.blobs.slice(0,max);
+    ex.innerHTML=`<span class="lbl" style="margin:0">${k==='ai'?'間取り図の写真（1枚目を間取り図に。寸法のメモなども4枚まで足せます）':'なぞる間取り図の写真'}</span><div class="fthumbs" id="n-thumbs"></div>
+      <div class="row"><label class="btn filebtn" id="n-pick"${c.blobs.length>=max?' hidden':''}>${c.blobs.length?'写真を追加':'写真を選ぶ'}<input type="file" id="n-file" accept="image/*"${max>1?' multiple':''}></label></div>
+      ${k==='ai'?'<p class="note" style="margin:0">作成すると、AIが写真から壁の長さ・ドア・窓などを読み取ります（30秒〜1分）。写真はAnthropic社へ送られます。</p>':''}`;
+    thumbs($('#n-thumbs'),c.blobs,k==='ai'?'間取り図':'');go.textContent=k==='ai'?'作成してAIで読み取る':'作成してなぞる';go.disabled=!c.blobs.length}
+  else if(k==='rect'){ex.innerHTML=`<span class="lbl" style="margin:0">広さ（寸法はあとで直せます）</span><div class="chips">${TATAMI.map(t=>`<button class="chipbtn${c.tat===t[0]?' on':''}" data-tat="${t[0]}">${t[0]}<small>${t[1]}×${t[2]}</small></button>`).join('')}</div>`;go.textContent='作成する';go.disabled=false}
+  else{ex.innerHTML=`<span class="lbl" style="margin:0">欠けている角（寸法はあとで直せます）</span><div class="shapes4">${CORNERS.map(x=>`<button class="${c.corner===x[0]?'on':''}" data-cn="${x[0]}"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="${x[2]}"/></svg>${x[1]}</button>`).join('')}</div>`;go.textContent='作成する';go.disabled=false}}
+function roomFromWalk(walk){const r=walkPts(walk);return{room:{shape:{kind:'walk',walk,notes:[]},pts:r.pts,ceil:240,wallT:10,doors:[{kind:'door',wall:0,off:20,w:80,h:200,swing:'in',hinge:'start'}]},items:[]}}
+const blobURL=b=>new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.onerror=()=>r(null);fr.readAsDataURL(b)});
+async function createFromSheet(){const c=sheetCtx,k=c.kind,name=$('#n-name').value.trim()||'新しい間取り';
+  if((k==='ai'||k==='trace')&&!c.blobs.length){$('#n-err').textContent='写真を選んでください。';return}
+  const t=TATAMI.find(x=>x[0]===c.tat)||TATAMI[1];
+  const data=k==='L'?roomFromWalk(walkL(360,450,150,120,c.corner)):roomFromWalk(walkRect(t[1],t[2]));
+  const rec=makeRec(name,$('#n-memo').value.trim(),data),blobs=c.blobs.slice();if(blobs.length)rec.photo=await blobURL(blobs[0]);
+  FILES.unshift(rec);idbPut(clone(rec));closeSheet();location.hash='plan-'+rec.id;
+  openFile(rec,{tab:'room',trace:k==='trace'});if(k==='ai')aiFromCreate(blobs)}
+function showBusy(t,sub){$('#busyT').textContent=t;$('#busyS').textContent=sub||'';$('#busy').hidden=false;document.body.classList.add('aibusy')}
+function hideBusy(){$('#busy').hidden=true;document.body.classList.remove('aibusy')}
+$('#busyStop').addEventListener('click',()=>{if(AI.ctl)AI.ctl.abort()});
+async function aiFromCreate(blobs){AI.blobs=blobs.slice();AI.ctl=new AbortController();showBusy('AIが写真から間取りを読み取っています','30秒〜1分ほどかかります。このままお待ちください。');
+  try{if(engine()==='none')throw{code:'no_engine'};const res=await aiCall('plan',AI.blobs,AI.ctl.signal);if(!applyAI(res))throw{code:'bad_shape'};
+    hideBusy();changed({room:true,sel:true});renderRoom();requestAnimationFrame(()=>{draw2D();camPersp()});toast('間取りができました。壁の長さとドア・窓を確かめてください')}
+  catch(err){hideBusy();enterAI();$('#ai-status').textContent=err&&err.code==='no_engine'?'この画面ではAIを使う設定がありません。APIキーを保存してから「この写真をAIで読み取る」を押してください。':err&&err.code==='cancelled'?'中止しました。「この写真をAIで読み取る」を押すと、もう一度読み取れます。':aiErr(err)+' 写真を見直して、もう一度読み取ってください。'}
+  finally{AI.ctl=null}}
+$('#sheetIn').addEventListener('change',async e=>{if(e.target.id!=='n-file'||!sheetCtx)return;const files=[...e.target.files];e.target.value='';const max=sheetCtx.kind==='ai'?4:1;const room=max-sheetCtx.blobs.length;if(room<=0||!files.length)return;
+  try{sheetCtx.blobs.push(...await Promise.all(files.slice(0,room).map(f=>toJpeg(f,1280))))}catch(x){$('#n-err').textContent='写真を読み込めませんでした。JPEGかPNGの写真を選んでください。';return}
+  renderNewExtra();if(files.length>room)$('#n-err').textContent=`写真は${max}枚までです。入りきらなかった分は外しました。`});
 function sheetMeta(f){openSheet(`<h2>名前・メモを変える</h2>
   <label class="f">名前（必須）<input type="text" id="m-name" value="${esc(f.name)}" maxlength="60"></label>
   <label class="f">メモ<input type="text" id="m-memo" value="${esc(f.memo)}" maxlength="120"></label><p class="err" id="m-err"></p>
@@ -1277,12 +1330,13 @@ function sheetMenu(f){if(!f)return;openSheet(`<h2>${esc(f.name)}</h2><div class=
   <div class="acts"><button class="btn" data-act="close">閉じる</button></div>`,{f})}
 function sheetDel(f){openSheet(`<h2>「${esc(f.name)}」を削除しますか？</h2><p class="note" style="margin:0">この間取りと、置いた家具の配置がすべて消えます。削除すると元に戻せません。</p>
   <div class="acts"><button class="btn" data-act="close">キャンセル</button><button class="btn dangerfill" data-act="delok">削除する</button></div>`,{f})}
-$('#sheetIn').addEventListener('click',e=>{const k=e.target.closest('[data-kind]');if(k){sheetCtx.kind=k.dataset.kind;document.querySelectorAll('#n-kind button').forEach(b=>b.classList.toggle('on',b===k));return}
+$('#sheetIn').addEventListener('click',e=>{const k=e.target.closest('[data-kind]');if(k){sheetCtx.kind=k.dataset.kind;document.querySelectorAll('#n-kind button').forEach(b=>b.classList.toggle('on',b===k));renderNewExtra();return}
+  const tt=e.target.closest('[data-tat]');if(tt){sheetCtx.tat=tt.dataset.tat;renderNewExtra();return}
+  const cn=e.target.closest('[data-cn]');if(cn){sheetCtx.corner=cn.dataset.cn;renderNewExtra();return}
+  const rm=e.target.closest('#n-thumbs [data-rmph]');if(rm){sheetCtx.blobs.splice(+rm.dataset.rmph,1);renderNewExtra();return}
   const b=e.target.closest('[data-act]');if(!b)return;const act=b.dataset.act,f=sheetCtx&&sheetCtx.f;
   if(act==='close')closeSheet();
-  else if(act==='create'){const name=$('#n-name').value.trim();if(!name){$('#n-err').textContent='名前を入れてください。';$('#n-name').focus();return}
-    const kind=sheetCtx.kind,rec=makeRec(name,$('#n-memo').value.trim(),roomFor(kind==='trace'||kind==='ai'?'rect':kind));FILES.unshift(rec);idbPut(clone(rec));closeSheet();
-    location.hash='plan-'+rec.id;openFile(rec,{tab:'room',trace:kind==='trace',ai:kind==='ai'})}
+  else if(act==='create'){createFromSheet()}
   else if(act==='savemeta'){const name=$('#m-name').value.trim();if(!name){$('#m-err').textContent='名前を入れてください。';return}
     f.name=name;f.memo=$('#m-memo').value.trim();f.updated=Date.now();idbPut(clone(f));closeSheet();if(CUR===f)$('#fname').textContent=name;else renderHome()}
   else if(act==='open')go('plan-'+f.id);
